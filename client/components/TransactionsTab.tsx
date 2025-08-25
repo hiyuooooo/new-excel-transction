@@ -405,19 +405,20 @@ export default function TransactionsTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
+                  {showDate && <TableHead>Date</TableHead>}
                   <TableHead>Deposited Customer</TableHead>
                   <TableHead>Transaction Details</TableHead>
-                  <TableHead>Type</TableHead>
+                  {showType && <TableHead>Type</TableHead>}
                   <TableHead className="text-right">Deposits</TableHead>
-                  <TableHead className="text-right">Withdrawals</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
+                  {showWithdrawals && <TableHead className="text-right">Withdrawals</TableHead>}
+                  {showBalance && <TableHead className="text-right">Balance</TableHead>}
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTransactions.map((transaction) => (
                   <TableRow key={transaction.id} className="hover:bg-gray-50">
+                    {showDate && (
                     <TableCell>
                       {editingId === transaction.id ? (
                         <Input
@@ -432,6 +433,7 @@ export default function TransactionsTab({
                         formatDate(transaction.date)
                       )}
                     </TableCell>
+                    )}
 
                     <TableCell>
                       {editingId === transaction.id ? (
@@ -495,6 +497,7 @@ export default function TransactionsTab({
                       )}
                     </TableCell>
 
+                    {showType && (
                     <TableCell>
                       {editingId === transaction.id ? (
                         <Select
@@ -518,6 +521,7 @@ export default function TransactionsTab({
                         </Badge>
                       )}
                     </TableCell>
+                    )}
 
                     <TableCell className="text-right">
                       {editingId === transaction.id ? (
@@ -541,6 +545,7 @@ export default function TransactionsTab({
                       )}
                     </TableCell>
 
+                    {showWithdrawals && (
                     <TableCell className="text-right">
                       {editingId === transaction.id ? (
                         <Input
@@ -564,7 +569,9 @@ export default function TransactionsTab({
                         <span className="text-gray-400">-</span>
                       )}
                     </TableCell>
+                    )}
 
+                    {showBalance && (
                     <TableCell className="text-right">
                       {editingId === transaction.id ? (
                         <Input
@@ -584,6 +591,7 @@ export default function TransactionsTab({
                         </span>
                       )}
                     </TableCell>
+                    )}
 
                     <TableCell className="text-center">
                       {editingId === transaction.id ? (
