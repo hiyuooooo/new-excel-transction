@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,9 @@ import {
   Filter,
   Calendar,
   ArrowUpDown,
+  Eye,
+  EyeOff,
+  Settings,
 } from "lucide-react";
 import {
   Select,
@@ -68,6 +71,27 @@ export default function TransactionsTab({
   customers,
   setCustomers,
 }: TransactionsTabProps) {
+
+  // Validate and fix duplicate transaction IDs on component mount
+  useEffect(() => {
+    const seenIds = new Set<number>();
+    const duplicatesFound = transactions.some(transaction => {
+      if (seenIds.has(transaction.id)) {
+        return true;
+      }
+      seenIds.add(transaction.id);
+      return false;
+    });
+
+    if (duplicatesFound) {
+      console.warn('Duplicate transaction IDs detected, fixing...');
+      const fixedTransactions = transactions.map((transaction, index) => ({
+        ...transaction,
+        id: Date.now() + index // Assign unique timestamp-based IDs
+      }));
+      setTransactions(fixedTransactions);
+    }
+  }, []);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Transaction>>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -78,6 +102,15 @@ export default function TransactionsTab({
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [depositorFilter, setDepositorFilter] = useState("all");
+
+  // Column visibility toggles
+  const [showWithdrawals, setShowWithdrawals] = useState(true);
+  const [showBalance, setShowBalance] = useState(true);
+  const [showDate, setShowDate] = useState(true);
+  const [showType, setShowType] = useState(true);
+
+  // Auto-balance feature
+  const [autoBalance, setAutoBalance] = useState(true);
 
   const handleEdit = (transaction: Transaction) => {
     setEditingId(transaction.id);
@@ -100,6 +133,32 @@ export default function TransactionsTab({
     }
   };
 
+  // Auto-balance amounts when editing
+  const handleAmountChange = (field: 'deposits' | 'withdrawals', value: number) => {
+    if (!autoBalance) {
+      setEditData({ ...editData, [field]: value });
+      return;
+    }
+
+    // Auto-balance: when one changes, adjust the other to maintain balance
+    const currentTransaction = transactions.find(t => t.id === editingId);
+    if (!currentTransaction) return;
+
+    if (field === 'deposits') {
+      setEditData({
+        ...editData,
+        deposits: value,
+        withdrawals: 0 // Clear withdrawals when setting deposits
+      });
+    } else {
+      setEditData({
+        ...editData,
+        withdrawals: value,
+        deposits: 0 // Clear deposits when setting withdrawals
+      });
+    }
+  };
+
   const handleCancel = () => {
     setEditingId(null);
     setEditData({});
@@ -119,6 +178,31 @@ export default function TransactionsTab({
     setShowCustomerDropdown(value.length > 0);
   };
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+        // Allow Enter to save when editing
+        if (e.key === 'Enter' && editingId) {
+          e.preventDefault();
+          handleSave();
+        }
+        return;
+      }
+
+      // Global shortcuts when not editing in input fields
+      if (e.key.toLowerCase() === 'a' && !editingId) {
+        e.preventDefault();
+        handleAddNew();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [editingId]);
+
   // Filter customers based on search term
   const filteredCustomerSuggestions = customers
     .filter((customer) =>
@@ -132,10 +216,12 @@ export default function TransactionsTab({
   };
 
   const handleAddNew = () => {
+    // Generate unique ID using timestamp + random to prevent duplicates
+    const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
     const newTransaction: Transaction = {
-      id: Math.max(...transactions.map((t) => t.id)) + 1,
+      id: uniqueId,
       date: new Date().toISOString().split("T")[0],
-      particulars: "",
+      particulars: "New Transaction",
       depositor: "",
       withdrawals: 0,
       deposits: 0,
@@ -145,6 +231,16 @@ export default function TransactionsTab({
     setTransactions([...transactions, newTransaction]);
     setEditingId(newTransaction.id);
     setEditData(newTransaction);
+    setCustomerSearchTerm("");
+    setShowCustomerDropdown(false);
+
+    // Scroll to the new transaction if not in view
+    setTimeout(() => {
+      const newRow = document.querySelector(`[data-transaction-id="${uniqueId}"]`);
+      if (newRow) {
+        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   // Get unique depositors for filter
@@ -233,9 +329,16 @@ export default function TransactionsTab({
         <div>
           <h3 className="text-2xl font-bold">Transaction Records</h3>
           <p className="text-muted-foreground">
-            View and edit all transaction details with deposited customer
-            information
+            View and edit all transaction details with deposited customer information
           </p>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              ⌨️ Shortcuts: Press <kbd className="px-1 bg-gray-100 rounded text-xs">A</kbd> to add new • Press <kbd className="px-1 bg-gray-100 rounded text-xs">Enter</kbd> to save while editing
+            </p>
+            <p className="text-sm text-blue-600 bg-blue-50 p-2 rounded border">
+              ⚙️ <strong>Auto-Balance:</strong> When enabled, editing deposit amounts automatically clears withdrawals (and vice versa). This ensures each transaction is either a deposit OR withdrawal, maintaining proper transaction logic. Toggle this feature using the Auto-Balance button below.
+            </p>
+          </div>
         </div>
         <Button onClick={handleAddNew} className="whitespace-nowrap">
           <Plus className="w-4 h-4 mr-2" />
@@ -337,6 +440,56 @@ export default function TransactionsTab({
                 Clear Filters
               </Button>
             )}
+
+            {/* Column Visibility Controls */}
+            <div className="flex gap-2">
+              <Button
+                variant={showDate ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowDate(!showDate)}
+                className="whitespace-nowrap"
+              >
+                {showDate ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+                Date
+              </Button>
+              <Button
+                variant={showType ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowType(!showType)}
+                className="whitespace-nowrap"
+              >
+                {showType ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+                Type
+              </Button>
+              <Button
+                variant={showWithdrawals ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowWithdrawals(!showWithdrawals)}
+                className="whitespace-nowrap"
+              >
+                {showWithdrawals ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+                Withdrawals
+              </Button>
+              <Button
+                variant={showBalance ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowBalance(!showBalance)}
+                className="whitespace-nowrap"
+              >
+                {showBalance ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+                Balance
+              </Button>
+              <Button
+                variant={autoBalance ? "default" : "outline"}
+                size="sm"
+                onClick={() => setAutoBalance(!autoBalance)}
+                className="whitespace-nowrap"
+                title="Auto-Balance Feature: When editing deposit amounts, withdrawals automatically clear to 0 (and vice versa). This maintains proper transaction logic where each entry is either a deposit OR withdrawal, never both. Click to toggle this behavior on/off."
+              >
+                <Settings className="w-4 h-4 mr-1" />
+                Auto-Balance
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -356,19 +509,24 @@ export default function TransactionsTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
+                  {showDate && <TableHead>Date</TableHead>}
                   <TableHead>Deposited Customer</TableHead>
                   <TableHead>Transaction Details</TableHead>
-                  <TableHead>Type</TableHead>
+                  {showType && <TableHead>Type</TableHead>}
                   <TableHead className="text-right">Deposits</TableHead>
-                  <TableHead className="text-right">Withdrawals</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
+                  {showWithdrawals && <TableHead className="text-right">Withdrawals</TableHead>}
+                  {showBalance && <TableHead className="text-right">Balance</TableHead>}
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.map((transaction) => (
-                  <TableRow key={transaction.id} className="hover:bg-gray-50">
+                {filteredTransactions.map((transaction, index) => (
+                  <TableRow
+                    key={`transaction-${transaction.id}-${index}`}
+                    className="hover:bg-gray-50"
+                    data-transaction-id={transaction.id}
+                  >
+                    {showDate && (
                     <TableCell>
                       {editingId === transaction.id ? (
                         <Input
@@ -378,11 +536,18 @@ export default function TransactionsTab({
                             setEditData({ ...editData, date: e.target.value })
                           }
                           className="w-32"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : (
                         formatDate(transaction.date)
                       )}
                     </TableCell>
+                    )}
 
                     <TableCell>
                       {editingId === transaction.id ? (
@@ -395,6 +560,12 @@ export default function TransactionsTab({
                             onFocus={() => setShowCustomerDropdown(true)}
                             placeholder="Type customer name..."
                             className="w-full"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSave();
+                              }
+                            }}
                           />
                           {showCustomerDropdown &&
                             filteredCustomerSuggestions.length > 0 && (
@@ -438,6 +609,12 @@ export default function TransactionsTab({
                             })
                           }
                           className="w-64"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : (
                         <span className="text-sm text-gray-600 max-w-xs truncate">
@@ -446,6 +623,7 @@ export default function TransactionsTab({
                       )}
                     </TableCell>
 
+                    {showType && (
                     <TableCell>
                       {editingId === transaction.id ? (
                         <Select
@@ -469,19 +647,21 @@ export default function TransactionsTab({
                         </Badge>
                       )}
                     </TableCell>
+                    )}
 
                     <TableCell className="text-right">
                       {editingId === transaction.id ? (
                         <Input
                           type="number"
                           value={editData.deposits ?? transaction.deposits}
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData,
-                              deposits: Number(e.target.value),
-                            })
-                          }
+                          onChange={(e) => handleAmountChange('deposits', Number(e.target.value))}
                           className="w-24 text-right"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : transaction.deposits > 0 ? (
                         <span className="deposit-text">
@@ -492,6 +672,7 @@ export default function TransactionsTab({
                       )}
                     </TableCell>
 
+                    {showWithdrawals && (
                     <TableCell className="text-right">
                       {editingId === transaction.id ? (
                         <Input
@@ -499,13 +680,14 @@ export default function TransactionsTab({
                           value={
                             editData.withdrawals ?? transaction.withdrawals
                           }
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData,
-                              withdrawals: Number(e.target.value),
-                            })
-                          }
+                          onChange={(e) => handleAmountChange('withdrawals', Number(e.target.value))}
                           className="w-24 text-right"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : transaction.withdrawals > 0 ? (
                         <span className="withdrawal-text">
@@ -515,7 +697,9 @@ export default function TransactionsTab({
                         <span className="text-gray-400">-</span>
                       )}
                     </TableCell>
+                    )}
 
+                    {showBalance && (
                     <TableCell className="text-right">
                       {editingId === transaction.id ? (
                         <Input
@@ -528,6 +712,12 @@ export default function TransactionsTab({
                             })
                           }
                           className="w-28 text-right"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : (
                         <span className="balance-text font-medium">
@@ -535,6 +725,7 @@ export default function TransactionsTab({
                         </span>
                       )}
                     </TableCell>
+                    )}
 
                     <TableCell className="text-center">
                       {editingId === transaction.id ? (

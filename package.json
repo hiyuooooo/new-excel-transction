@@ -12,17 +12,23 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite --host 0.0.0.0 --port 7020",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "vite build --config vite.config.server.ts",
+    "build:local": "vite build --outDir dist/local",
     "start": "node dist/server/node-build.mjs",
+    "start:local": "npx serve dist/local -p 7020",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "local:setup": "npm install && npm run build:local",
+    "local:run": "npm run start:local"
   },
   "dependencies": {
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "serve": "^14.2.1",
     "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },

@@ -49,6 +49,27 @@ export default function CustomerTab({
   customers,
   setCustomers,
 }: CustomerTabProps) {
+
+  // Validate and fix duplicate IDs on component mount
+  React.useEffect(() => {
+    const seenIds = new Set<number>();
+    const duplicatesFound = customers.some(customer => {
+      if (seenIds.has(customer.id)) {
+        return true;
+      }
+      seenIds.add(customer.id);
+      return false;
+    });
+
+    if (duplicatesFound) {
+      console.warn('Duplicate customer IDs detected, fixing...');
+      const fixedCustomers = customers.map((customer, index) => ({
+        ...customer,
+        id: Date.now() + index // Assign unique timestamp-based IDs
+      }));
+      setCustomers(fixedCustomers);
+    }
+  }, []);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Customer>>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -94,8 +115,10 @@ export default function CustomerTab({
   };
 
   const handleAddNew = () => {
+    // Generate unique ID using timestamp + random to prevent duplicates
+    const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
     const newCustomer: Customer = {
-      id: Math.max(...customers.map((c) => c.id), 0) + 1,
+      id: uniqueId,
       name: "",
       totalDeposits: 0,
       transactionCount: 0,
@@ -185,19 +208,18 @@ export default function CustomerTab({
                   );
 
                   if (!existingCustomer && !alreadyInImported) {
-                    const customer: Customer = {
-                      id:
-                        Math.max(...customers.map((c) => c.id), 0) +
-                        importedCustomers.length +
-                        1,
-                      name: customerName,
-                      totalDeposits: 0,
-                      transactionCount: 0,
-                      lastTransaction: new Date().toISOString().split("T")[0],
-                      isActive: true,
-                    };
-                    importedCustomers.push(customer);
-                    console.log("Added customer:", customerName);
+                  // Generate unique ID using timestamp + counter to prevent duplicates
+                  const uniqueId = Date.now() + importedCustomers.length;
+                  const customer: Customer = {
+                    id: uniqueId,
+                    name: customerName,
+                    totalDeposits: 0,
+                    transactionCount: 0,
+                    lastTransaction: new Date().toISOString().split("T")[0],
+                    isActive: true,
+                  };
+                  importedCustomers.push(customer);
+                  console.log("Added customer:", customerName);
                   } else {
                     console.log("Skipped duplicate customer:", customerName);
                   }
@@ -286,11 +308,10 @@ export default function CustomerTab({
         );
 
         if (!existingCustomer && !alreadyInImported) {
+          // Generate unique ID using timestamp + counter to prevent duplicates
+          const uniqueId = Date.now() + importedCustomers.length;
           const customer: Customer = {
-            id:
-              Math.max(...customers.map((c) => c.id), 0) +
-              importedCustomers.length +
-              1,
+            id: uniqueId,
             name: customerName,
             totalDeposits: 0,
             transactionCount: 0,
@@ -561,8 +582,8 @@ export default function CustomerTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedCustomers.map((customer) => (
-                  <TableRow key={customer.id} className="hover:bg-gray-50">
+                {paginatedCustomers.map((customer, index) => (
+                  <TableRow key={`customer-${customer.id}-${index}`} className="hover:bg-gray-50">
                     <TableCell>
                       {editingId === customer.id ? (
                         <Input

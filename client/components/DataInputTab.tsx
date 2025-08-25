@@ -1095,8 +1095,8 @@ export default function DataInputTab({ onDataExport }: DataInputTabProps) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {extractedData.slice(0, 5).map((row) => (
-                        <TableRow key={row.id}>
+                      {extractedData.slice(0, 5).map((row, index) => (
+                        <TableRow key={`extracted-${row.id}-${index}`}>
                           <TableCell className="text-sm">{new Date(row.date).toLocaleDateString('en-IN')}</TableCell>
                           <TableCell className="text-sm">{row.description}</TableCell>
                           <TableCell className="text-sm text-green-600">{formatCurrency(row.amount)}</TableCell>
@@ -1179,8 +1179,8 @@ export default function DataInputTab({ onDataExport }: DataInputTabProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {dataRows.map((row) => (
-                    <TableRow key={row.id}>
+                  {dataRows.map((row, index) => (
+                    <TableRow key={`datarow-${row.id}-${index}`}>
                       <TableCell>
                         {editingId === row.id ? (
                           <Input

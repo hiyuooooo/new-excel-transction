@@ -373,30 +373,50 @@ export default function PDFUpload({ onTransactionsImported }: PDFUploadProps) {
       !lowerLine.includes("payment") &&
       !lowerLine.includes("charge");
 
-    // Extract depositor name with multiple patterns
+    // Extract depositor name with improved patterns
     if (line.includes("MPAY")) {
-      // Pattern 1: MPAYUPITRTR followed by numbers then name
+      // Pattern 1: Skip transaction identifiers like UPITRTR and look for actual names
+      // Example: MPAYUPITRTR5222741 19801 NAVEENKUMARSBINXXX30 -> NAVEENKUMAR
       let mpayPattern =
-        /MPAY.*?(?:\d+)([A-Z][A-Z\s]+?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX)/i;
+        /MPAY(?:UPITRTR|UPI|TRTR)?\d+\s+\d+\s+([A-Z][A-Z\s]+?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX)/i;
       let depositorMatch = line.match(mpayPattern);
 
       if (depositorMatch) {
-        depositor = depositorMatch[1].trim().replace(/\s+/g, " ");
+        const name = depositorMatch[1].trim().replace(/\s+/g, " ");
+        depositor = name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
       } else {
-        // Pattern 2: More flexible name extraction
-        mpayPattern = /MPAY.*?([A-Z][A-Z\s]{2,20}?)(?:[A-Z]{3,4}XXX|\d|$)/i;
+        // Pattern 2: Look for names after any MPAY transaction identifier and numbers
+        mpayPattern = /MPAY\w*\d+\s+\d*\s*([A-Z][A-Z\s]{2,20}?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX|\d|$)/i;
         depositorMatch = line.match(mpayPattern);
         if (depositorMatch) {
-          depositor = depositorMatch[1].trim().replace(/\s+/g, " ");
+          const name = depositorMatch[1].trim().replace(/\s+/g, " ");
+          depositor = name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
+        } else {
+          // Pattern 3: Fallback - look for names after MPAY but skip common transaction codes
+          mpayPattern = /MPAY(?:UPITRTR|UPI|TRTR)?.*?\d+.*?([A-Z][A-Z\s]{3,20}?)(?:[A-Z]{3,4}XXX|\d|$)/i;
+          depositorMatch = line.match(mpayPattern);
+          if (depositorMatch) {
+            const name = depositorMatch[1].trim().replace(/\s+/g, " ");
+            // Skip transaction identifiers
+            if (!name.match(/^(UPITRTR|TRTR|UPI|MPAY)$/i)) {
+              depositor = name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
+            }
+          }
         }
       }
     } else {
-      // Look for names in other patterns
-      const namePattern = /([A-Z][A-Z\s]{2,20})/g;
+      // Look for names in other patterns, but filter out transaction identifiers
+      const namePattern = /([A-Z][A-Z\s]{3,20})/g;
       const nameMatches = line.match(namePattern);
       if (nameMatches && nameMatches.length > 0) {
-        // Take the first reasonable name
-        depositor = nameMatches[0].trim().replace(/\s+/g, " ");
+        // Take the first reasonable name that's not a transaction identifier
+        for (const match of nameMatches) {
+          const name = match.trim().replace(/\s+/g, " ");
+          if (!name.match(/^(UPITRTR|TRTR|UPI|MPAY|TRANSFER|NEFT|RTGS)$/i) && name.length > 2) {
+            depositor = name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
+            break;
+          }
+        }
       }
     }
 
