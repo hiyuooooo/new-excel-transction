@@ -296,8 +296,10 @@ export default function TransactionsTab({
         <div>
           <h3 className="text-2xl font-bold">Transaction Records</h3>
           <p className="text-muted-foreground">
-            View and edit all transaction details with deposited customer
-            information
+            View and edit all transaction details with deposited customer information
+          </p>
+          <p className="text-sm text-muted-foreground">
+            ⌨️ Shortcuts: Press <kbd className="px-1 bg-gray-100 rounded text-xs">A</kbd> to add new • Press <kbd className="px-1 bg-gray-100 rounded text-xs">Enter</kbd> to save while editing
           </p>
         </div>
         <Button onClick={handleAddNew} className="whitespace-nowrap">
@@ -438,6 +440,16 @@ export default function TransactionsTab({
               >
                 {showBalance ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
                 Balance
+              </Button>
+              <Button
+                variant={autoBalance ? "default" : "outline"}
+                size="sm"
+                onClick={() => setAutoBalance(!autoBalance)}
+                className="whitespace-nowrap"
+                title="Auto-balance: When editing amounts, automatically clear the opposite field"
+              >
+                <Settings className="w-4 h-4 mr-1" />
+                Auto-Balance
               </Button>
             </div>
           </div>
