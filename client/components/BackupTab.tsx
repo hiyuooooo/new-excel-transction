@@ -92,11 +92,17 @@ export default function BackupTab({
 
   const createAutoBackup = () => {
     try {
+      console.log('Creating auto-backup with:', {
+        transactionCount: transactions.length,
+        customerCount: customers.length,
+        transactions: transactions.slice(0, 3) // Log first 3 for debugging
+      });
+
       const backupData: BackupData = {
         version: "1.0",
         timestamp: new Date().toISOString(),
-        transactions,
-        customers,
+        transactions: [...transactions], // Create fresh copy
+        customers: [...customers], // Create fresh copy
         metadata: {
           totalTransactions: transactions.length,
           totalCustomers: customers.length,
@@ -106,11 +112,13 @@ export default function BackupTab({
 
       localStorage.setItem("transaction-app-auto-backup", JSON.stringify(backupData));
       localStorage.setItem("transaction-app-last-backup", new Date().toISOString());
-      
+
       const storedDate = localStorage.getItem("transaction-app-last-backup");
       if (storedDate) {
         setLastBackupDate(storedDate);
       }
+
+      console.log('Auto-backup created successfully with', backupData.transactions.length, 'transactions');
     } catch (error) {
       console.error("Auto-backup failed:", error);
     }
@@ -119,17 +127,25 @@ export default function BackupTab({
   const exportToFile = () => {
     setIsExporting(true);
     try {
+      console.log('Exporting backup with:', {
+        transactionCount: transactions.length,
+        customerCount: customers.length,
+        allTransactions: transactions
+      });
+
       const backupData: BackupData = {
         version: "1.0",
         timestamp: new Date().toISOString(),
-        transactions,
-        customers,
+        transactions: [...transactions], // Create fresh copy to avoid reference issues
+        customers: [...customers], // Create fresh copy to avoid reference issues
         metadata: {
           totalTransactions: transactions.length,
           totalCustomers: customers.length,
           backupSource: "manual-export",
         },
       };
+
+      console.log('Final backup data contains:', backupData.transactions.length, 'transactions');
 
       const jsonString = JSON.stringify(backupData, null, 2);
       const blob = new Blob([jsonString], { type: "application/json" });
@@ -143,9 +159,10 @@ export default function BackupTab({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      setImportResult("✅ Backup exported successfully!")
-      setTimeout(() => setImportResult(null), 3000);
+      setImportResult(`✅ Backup exported successfully! ${backupData.transactions.length} transactions and ${backupData.customers.length} customers included.`)
+      setTimeout(() => setImportResult(null), 5000);
     } catch (error) {
+      console.error('Export error:', error);
       setImportResult(`❌ Export failed: ${error instanceof Error ? error.message : "Unknown error"}`);
       setTimeout(() => setImportResult(null), 5000);
     } finally {
@@ -175,9 +192,16 @@ export default function BackupTab({
           throw new Error("Invalid data structure in backup file");
         }
 
-        // Import data
-        setTransactions(backupData.transactions);
-        setCustomers(backupData.customers);
+        console.log('Importing backup data:', {
+          transactionCount: backupData.transactions.length,
+          customerCount: backupData.customers.length,
+          firstTransaction: backupData.transactions[0],
+          lastTransaction: backupData.transactions[backupData.transactions.length - 1]
+        });
+
+        // Import data - use fresh copies to avoid reference issues
+        setTransactions([...backupData.transactions]);
+        setCustomers([...backupData.customers]);
 
         setImportResult(
           `✅ Import successful! Restored ${backupData.transactions.length} transactions and ${backupData.customers.length} customers from backup created on ${new Date(backupData.timestamp).toLocaleString()}`
@@ -221,9 +245,14 @@ export default function BackupTab({
         throw new Error("Invalid backup JSON format");
       }
 
-      // Import data
-      setTransactions(backupData.transactions);
-      setCustomers(backupData.customers);
+      console.log('Importing JSON data:', {
+        transactionCount: backupData.transactions.length,
+        customerCount: backupData.customers.length
+      });
+
+      // Import data - use fresh copies to avoid reference issues
+      setTransactions([...backupData.transactions]);
+      setCustomers([...backupData.customers]);
 
       setImportResult(
         `✅ Import successful! Restored ${backupData.transactions.length} transactions and ${backupData.customers.length} customers`
@@ -248,8 +277,13 @@ export default function BackupTab({
       }
 
       const backupData: BackupData = JSON.parse(storedBackup);
-      setTransactions(backupData.transactions);
-      setCustomers(backupData.customers);
+      console.log('Restoring auto-backup:', {
+        transactionCount: backupData.transactions.length,
+        customerCount: backupData.customers.length
+      });
+
+      setTransactions([...backupData.transactions]);
+      setCustomers([...backupData.customers]);
 
       setImportResult(
         `✅ Restored from auto-backup! ${backupData.transactions.length} transactions and ${backupData.customers.length} customers restored`
