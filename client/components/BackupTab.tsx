@@ -84,11 +84,21 @@ export default function BackupTab({
       createAutoBackup();
     }, 5 * 60 * 1000); // 5 minutes
 
-    // Create initial backup on component mount
-    createAutoBackup();
+    // Create initial backup on component mount (with delay to ensure state is ready)
+    const timer = setTimeout(() => {
+      createAutoBackup();
+    }, 1000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
   }, [transactions, customers]);
+
+  // Log whenever transactions change for debugging
+  React.useEffect(() => {
+    console.log('BackupTab: Transactions updated, count:', transactions.length);
+  }, [transactions]);
 
   const createAutoBackup = () => {
     try {
@@ -296,7 +306,7 @@ export default function BackupTab({
   };
 
   const clearAllData = () => {
-    if (confirm("⚠️ Are you sure you want to clear ALL data? This action cannot be undone!\n\nThis will delete:\n- All transactions\n- All customers\n- All data\n\nClick OK to confirm or Cancel to abort.")) {
+    if (confirm("⚠��� Are you sure you want to clear ALL data? This action cannot be undone!\n\nThis will delete:\n- All transactions\n- All customers\n- All data\n\nClick OK to confirm or Cancel to abort.")) {
       setTransactions([]);
       setCustomers([]);
       setImportResult("🗑️ All data cleared successfully");
@@ -464,25 +474,46 @@ export default function BackupTab({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <Button 
-              onClick={exportToFile} 
-              disabled={isExporting}
-              className="flex-1"
-            >
-              {isExporting ? (
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="w-4 h-4 mr-2" />
-              )}
-              Export to File
-            </Button>
-            <Button 
-              onClick={createAutoBackup}
+          <div className="space-y-3">
+            <div className="flex gap-4">
+              <Button
+                onClick={exportToFile}
+                disabled={isExporting}
+                className="flex-1"
+              >
+                {isExporting ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Export to File
+              </Button>
+              <Button
+                onClick={createAutoBackup}
+                variant="outline"
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Create Manual Backup
+              </Button>
+            </div>
+
+            {/* Debug Test Button */}
+            <Button
+              onClick={() => {
+                console.log('=== BACKUP DEBUG TEST ===');
+                console.log('Current transactions array:', transactions);
+                console.log('Transactions count:', transactions.length);
+                console.log('Transactions with deposits:', transactions.filter(t => t.deposits > 0).length);
+                console.log('First 3 transactions:', transactions.slice(0, 3));
+                console.log('Last 3 transactions:', transactions.slice(-3));
+                setImportResult(`🔍 Debug: Found ${transactions.length} transactions in current state. Check browser console for details.`);
+                setTimeout(() => setImportResult(null), 5000);
+              }}
               variant="outline"
+              size="sm"
+              className="w-full"
             >
-              <Save className="w-4 h-4 mr-2" />
-              Create Manual Backup
+              🔍 Debug: Test Current Data
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
