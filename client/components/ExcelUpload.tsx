@@ -372,32 +372,44 @@ export default function ExcelUpload({
   };
 
   const extractDepositorFromParticulars = (particulars: string): string => {
-    // Use same sophisticated patterns as PDF import
+    // Improved patterns to correctly extract customer names
 
-    // Extract depositor name with multiple patterns (same as PDF import)
+    // Extract depositor name with multiple patterns
     if (particulars.includes("MPAY")) {
-      // Pattern 1: MPAYUPITRTR followed by numbers then name
+      // Pattern 1: Skip transaction identifiers like UPITRTR and look for actual names
+      // Example: MPAYUPITRTR5222741 19801 NAVEENKUMARSBINXXX30 -> NAVEENKUMAR
       let mpayPattern =
-        /MPAY.*?(?:\d+)([A-Z][A-Z\s]+?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX)/i;
+        /MPAY(?:UPITRTR|UPI|TRTR)?\d+\s+\d+\s+([A-Z][A-Z\s]+?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX)/i;
       let depositorMatch = particulars.match(mpayPattern);
 
       if (depositorMatch) {
         return depositorMatch[1].trim().replace(/\s+/g, " ");
       } else {
-        // Pattern 2: More flexible name extraction
-        mpayPattern = /MPAY.*?([A-Z][A-Z\s]{2,20}?)(?:[A-Z]{3,4}XXX|\d|$)/i;
+        // Pattern 2: Look for names after any MPAY transaction identifier and numbers
+        mpayPattern = /MPAY\w*\d+\s+\d*\s*([A-Z][A-Z\s]{2,20}?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX|\d|$)/i;
         depositorMatch = particulars.match(mpayPattern);
         if (depositorMatch) {
           return depositorMatch[1].trim().replace(/\s+/g, " ");
+        }
+
+        // Pattern 3: Fallback - look for names after MPAY but skip common transaction codes
+        mpayPattern = /MPAY(?:UPITRTR|UPI|TRTR)?.*?\d+.*?([A-Z][A-Z\s]{3,20}?)(?:[A-Z]{3,4}XXX|\d|$)/i;
+        depositorMatch = particulars.match(mpayPattern);
+        if (depositorMatch) {
+          const name = depositorMatch[1].trim().replace(/\s+/g, " ");
+          // Skip transaction identifiers
+          if (!name.match(/^(UPITRTR|TRTR|UPI|MPAY)$/i)) {
+            return name;
+          }
         }
       }
     }
 
     // Additional patterns for UPI and other transactions
     const patterns = [
-      // UPI patterns
-      /UPI.*?(?:\d+)([A-Z][A-Z\s]+?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX)/i,
-      /UPI.*?([A-Z][A-Z\s]{2,20}?)(?:[A-Z]{3,4}XXX|\d|$)/i,
+      // UPI patterns - improved to skip transaction identifiers
+      /UPI(?:TRTR)?\d+\s+\d+\s+([A-Z][A-Z\s]+?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX)/i,
+      /UPI\w*\d+\s+\d*\s*([A-Z][A-Z\s]{3,20}?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX|\d|$)/i,
 
       // TRANSFER patterns
       /TRANSFER.*?(?:\d+)([A-Z][A-Z\s]+?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX)/i,
@@ -420,12 +432,13 @@ export default function ExcelUpload({
       const match = particulars.match(pattern);
       if (match) {
         const name = match[1].trim().replace(/\s+/g, " ");
-        // Filter out common non-names
+        // Filter out common non-names and transaction identifiers
         if (
           !name.match(
-            /^(TRTR|MPAY|UPI|TRANSFER|NEFT|RTGS|XXX|SBIN|PUNB|BARB|UCBA|IBKL)$/i,
+            /^(UPITRTR|TRTR|MPAY|UPI|TRANSFER|NEFT|RTGS|XXX|SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)$/i,
           ) &&
-          name.length > 2
+          name.length > 2 &&
+          !name.match(/^\d+$/) // Exclude pure numbers
         ) {
           return name;
         }
