@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +88,9 @@ export default function TransactionsTab({
   const [showDate, setShowDate] = useState(true);
   const [showType, setShowType] = useState(true);
 
+  // Auto-balance feature
+  const [autoBalance, setAutoBalance] = useState(true);
+
   const handleEdit = (transaction: Transaction) => {
     setEditingId(transaction.id);
     setEditData(transaction);
@@ -109,6 +112,32 @@ export default function TransactionsTab({
     }
   };
 
+  // Auto-balance amounts when editing
+  const handleAmountChange = (field: 'deposits' | 'withdrawals', value: number) => {
+    if (!autoBalance) {
+      setEditData({ ...editData, [field]: value });
+      return;
+    }
+
+    // Auto-balance: when one changes, adjust the other to maintain balance
+    const currentTransaction = transactions.find(t => t.id === editingId);
+    if (!currentTransaction) return;
+
+    if (field === 'deposits') {
+      setEditData({
+        ...editData,
+        deposits: value,
+        withdrawals: 0 // Clear withdrawals when setting deposits
+      });
+    } else {
+      setEditData({
+        ...editData,
+        withdrawals: value,
+        deposits: 0 // Clear deposits when setting withdrawals
+      });
+    }
+  };
+
   const handleCancel = () => {
     setEditingId(null);
     setEditData({});
@@ -127,6 +156,31 @@ export default function TransactionsTab({
     setCustomerSearchTerm(value);
     setShowCustomerDropdown(value.length > 0);
   };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+        // Allow Enter to save when editing
+        if (e.key === 'Enter' && editingId) {
+          e.preventDefault();
+          handleSave();
+        }
+        return;
+      }
+
+      // Global shortcuts when not editing in input fields
+      if (e.key.toLowerCase() === 'a' && !editingId) {
+        e.preventDefault();
+        handleAddNew();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [editingId]);
 
   // Filter customers based on search term
   const filteredCustomerSuggestions = customers
@@ -528,13 +582,14 @@ export default function TransactionsTab({
                         <Input
                           type="number"
                           value={editData.deposits ?? transaction.deposits}
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData,
-                              deposits: Number(e.target.value),
-                            })
-                          }
+                          onChange={(e) => handleAmountChange('deposits', Number(e.target.value))}
                           className="w-24 text-right"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : transaction.deposits > 0 ? (
                         <span className="deposit-text">
@@ -553,13 +608,14 @@ export default function TransactionsTab({
                           value={
                             editData.withdrawals ?? transaction.withdrawals
                           }
-                          onChange={(e) =>
-                            setEditData({
-                              ...editData,
-                              withdrawals: Number(e.target.value),
-                            })
-                          }
+                          onChange={(e) => handleAmountChange('withdrawals', Number(e.target.value))}
                           className="w-24 text-right"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : transaction.withdrawals > 0 ? (
                         <span className="withdrawal-text">
