@@ -71,6 +71,27 @@ export default function TransactionsTab({
   customers,
   setCustomers,
 }: TransactionsTabProps) {
+
+  // Validate and fix duplicate transaction IDs on component mount
+  useEffect(() => {
+    const seenIds = new Set<number>();
+    const duplicatesFound = transactions.some(transaction => {
+      if (seenIds.has(transaction.id)) {
+        return true;
+      }
+      seenIds.add(transaction.id);
+      return false;
+    });
+
+    if (duplicatesFound) {
+      console.warn('Duplicate transaction IDs detected, fixing...');
+      const fixedTransactions = transactions.map((transaction, index) => ({
+        ...transaction,
+        id: Date.now() + index // Assign unique timestamp-based IDs
+      }));
+      setTransactions(fixedTransactions);
+    }
+  }, []);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Transaction>>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -195,8 +216,10 @@ export default function TransactionsTab({
   };
 
   const handleAddNew = () => {
+    // Generate unique ID using timestamp + random to prevent duplicates
+    const uniqueId = Date.now() + Math.floor(Math.random() * 1000);
     const newTransaction: Transaction = {
-      id: Math.max(...transactions.map((t) => t.id)) + 1,
+      id: uniqueId,
       date: new Date().toISOString().split("T")[0],
       particulars: "",
       depositor: "",
@@ -482,8 +505,8 @@ export default function TransactionsTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.map((transaction) => (
-                  <TableRow key={transaction.id} className="hover:bg-gray-50">
+                {filteredTransactions.map((transaction, index) => (
+                  <TableRow key={`transaction-${transaction.id}-${index}`} className="hover:bg-gray-50">
                     {showDate && (
                     <TableCell>
                       {editingId === transaction.id ? (
