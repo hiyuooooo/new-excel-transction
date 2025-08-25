@@ -38,6 +38,7 @@ import MonthlySummaryTab from "@/components/MonthlySummaryTab";
 import DataInputTab from "@/components/DataInputTab";
 import CustomerTab from "@/components/CustomerTab";
 import FinalTab from "@/components/FinalTab";
+import BackupTab from "@/components/BackupTab";
 import PDFUpload from "@/components/PDFUpload";
 import ExcelUpload from "@/components/ExcelUpload";
 import {
@@ -418,7 +419,7 @@ export default function Index() {
             className="w-full"
           >
             <CardHeader>
-              <TabsList className="grid w-full grid-cols-5 h-12">
+              <TabsList className="grid w-full grid-cols-6 h-12">
                 <TabsTrigger value="transactions" className="text-base">
                   Transactions
                 </TabsTrigger>
@@ -433,6 +434,9 @@ export default function Index() {
                 </TabsTrigger>
                 <TabsTrigger value="datainput" className="text-base">
                   Data Input
+                </TabsTrigger>
+                <TabsTrigger value="backup" className="text-base">
+                  Backup
                 </TabsTrigger>
               </TabsList>
             </CardHeader>
