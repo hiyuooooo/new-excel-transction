@@ -76,10 +76,7 @@ echo
 # Function to open browser based on OS
 open_browser() {
     local url="http://localhost:7020"
-    
-    # Wait a moment for server to start
-    sleep 3
-    
+
     # Detect OS and open browser
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
@@ -98,7 +95,7 @@ open_browser() {
 }
 
 # Start browser opener in background
-open_browser &
+(sleep 3 && open_browser) &
 
 # Start the development server
 echo -e "${BLUE}🚀 Starting development server...${NC}"
