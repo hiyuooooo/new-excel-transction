@@ -1,8 +1,11 @@
 #!/bin/bash
 
-echo "========================================"
-echo "   Transaction Manager - Local Setup"
-echo "========================================"
+echo "=========================================="
+echo "     Transaction Manager - Local Setup"
+echo "=========================================="
+echo
+echo "Welcome! Setting up your local transaction manager..."
+echo "This will automatically install everything you need."
 echo
 
 # Colors for output
@@ -55,12 +58,19 @@ if [ ! -d "node_modules" ]; then
     echo
 fi
 
-echo -e "${BLUE}Starting Transaction Manager...${NC}"
+echo "=========================================="
+echo -e "${GREEN}       STARTING TRANSACTION MANAGER${NC}"
+echo "=========================================="
 echo
-echo -e "${GREEN}Server will be available at: http://localhost:7020${NC}"
+echo -e "${GREEN}✅ Setup Complete!${NC}"
+echo -e "${GREEN}✅ Server starting on: http://localhost:7020${NC}"
+echo -e "${GREEN}✅ Browser will open automatically${NC}"
 echo
-echo "Your default browser will open automatically."
-echo "To stop the server, press Ctrl+C in this terminal."
+echo -e "${YELLOW}📝 To add transactions: Press 'A' key${NC}"
+echo -e "${YELLOW}💾 To backup data: Go to 'Backup' tab${NC}"
+echo -e "${YELLOW}🛑 To stop: Press Ctrl+C in this terminal${NC}"
+echo
+echo "=========================================="
 echo
 
 # Function to open browser based on OS
@@ -91,7 +101,19 @@ open_browser() {
 open_browser &
 
 # Start the development server
-echo -e "${YELLOW}Starting development server...${NC}"
+echo -e "${BLUE}🚀 Starting development server...${NC}"
+echo
+echo "Opening browser in 3 seconds..."
+echo
+
+# Start browser opener in background
+(
+    sleep 3
+    open_browser
+) &
+
+echo -e "${GREEN}✨ Transaction Manager is starting...${NC}"
+echo
 pnpm dev
 
 # If pnpm dev fails, show error
