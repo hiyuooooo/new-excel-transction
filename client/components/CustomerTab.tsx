@@ -49,6 +49,27 @@ export default function CustomerTab({
   customers,
   setCustomers,
 }: CustomerTabProps) {
+
+  // Validate and fix duplicate IDs on component mount
+  React.useEffect(() => {
+    const seenIds = new Set<number>();
+    const duplicatesFound = customers.some(customer => {
+      if (seenIds.has(customer.id)) {
+        return true;
+      }
+      seenIds.add(customer.id);
+      return false;
+    });
+
+    if (duplicatesFound) {
+      console.warn('Duplicate customer IDs detected, fixing...');
+      const fixedCustomers = customers.map((customer, index) => ({
+        ...customer,
+        id: Date.now() + index // Assign unique timestamp-based IDs
+      }));
+      setCustomers(fixedCustomers);
+    }
+  }, []);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState<Partial<Customer>>({});
   const [searchTerm, setSearchTerm] = useState("");
@@ -561,8 +582,8 @@ export default function CustomerTab({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedCustomers.map((customer) => (
-                  <TableRow key={customer.id} className="hover:bg-gray-50">
+                {paginatedCustomers.map((customer, index) => (
+                  <TableRow key={`customer-${customer.id}-${index}`} className="hover:bg-gray-50">
                     <TableCell>
                       {editingId === customer.id ? (
                         <Input
