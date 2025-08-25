@@ -378,7 +378,7 @@ export default function BackupTab({
       )}
 
       {/* Current Data Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Transactions</CardTitle>
@@ -387,6 +387,9 @@ export default function BackupTab({
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{transactions.length}</div>
             <p className="text-xs text-muted-foreground">Total records</p>
+            <p className="text-xs text-blue-600 mt-1">
+              IDs: {transactions.length > 0 ? `${transactions[0]?.id} - ${transactions[transactions.length-1]?.id}` : 'None'}
+            </p>
           </CardContent>
         </Card>
 
@@ -411,6 +414,40 @@ export default function BackupTab({
               {lastBackupDate ? formatDate(lastBackupDate) : "Never"}
             </div>
             <p className="text-xs text-muted-foreground">Automatic backup</p>
+            {(() => {
+              try {
+                const stored = localStorage.getItem("transaction-app-auto-backup");
+                if (stored) {
+                  const data = JSON.parse(stored);
+                  return (
+                    <p className="text-xs text-purple-600 mt-1">
+                      {data.transactions?.length || 0} trans. stored
+                    </p>
+                  );
+                }
+              } catch (e) {}
+              return null;
+            })()}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Debug Info</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm space-y-1">
+              <div className="text-xs text-gray-600">
+                Ready to backup: {transactions.length} trans
+              </div>
+              <div className="text-xs text-gray-600">
+                Latest ID: {transactions.length > 0 ? Math.max(...transactions.map(t => t.id)) : 'None'}
+              </div>
+              <div className="text-xs text-gray-600">
+                With deposits: {transactions.filter(t => t.deposits > 0).length}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
