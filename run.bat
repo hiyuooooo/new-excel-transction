@@ -1,7 +1,11 @@
 @echo off
-echo ========================================
-echo    Transaction Manager - Local Setup
-echo ========================================
+color 0A
+echo ==========================================
+echo     Transaction Manager - Local Setup
+echo ==========================================
+echo.
+echo Welcome! Setting up your local transaction manager...
+echo This will automatically install everything you need.
 echo.
 
 REM Check if Node.js is installed
@@ -48,17 +52,33 @@ if not exist "node_modules" (
     echo.
 )
 
-echo Starting Transaction Manager...
+echo ==========================================
+echo       STARTING TRANSACTION MANAGER
+echo ==========================================
 echo.
-echo Server will be available at: http://localhost:7020
+echo ✅ Setup Complete!
+echo ✅ Server starting on: http://localhost:7020
+echo ✅ Browser will open automatically
 echo.
-echo Your default browser will open automatically.
-echo To stop the server, press Ctrl+C in this window.
+echo 📝 To add transactions: Press 'A' key
+echo 💾 To backup data: Go to 'Backup' tab
+echo 🛑 To stop: Press Ctrl+C in this window
+echo.
+echo ==========================================
 echo.
 
 REM Start the development server
-echo Starting development server...
+echo 🚀 Starting development server...
+echo.
+echo Opening browser in 3 seconds...
+
+REM Wait a moment then open browser
+timeout /t 3 /nobreak >nul
 start "" "http://localhost:7020"
+
+echo.
+echo ✨ Transaction Manager is starting...
+echo.
 pnpm dev
 
 REM If pnpm dev fails, keep window open to show error
