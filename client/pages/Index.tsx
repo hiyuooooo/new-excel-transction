@@ -474,6 +474,15 @@ export default function Index() {
               <TabsContent value="datainput" className="mt-0">
                 <DataInputTab />
               </TabsContent>
+
+              <TabsContent value="backup" className="mt-0">
+                <BackupTab
+                  transactions={transactions}
+                  setTransactions={setTransactions}
+                  customers={customers}
+                  setCustomers={setCustomers}
+                />
+              </TabsContent>
             </CardContent>
           </Tabs>
         </Card>
