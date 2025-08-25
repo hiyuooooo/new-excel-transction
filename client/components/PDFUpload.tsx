@@ -382,13 +382,15 @@ export default function PDFUpload({ onTransactionsImported }: PDFUploadProps) {
       let depositorMatch = line.match(mpayPattern);
 
       if (depositorMatch) {
-        depositor = depositorMatch[1].trim().replace(/\s+/g, " ");
+        const name = depositorMatch[1].trim().replace(/\s+/g, " ");
+        depositor = name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
       } else {
         // Pattern 2: Look for names after any MPAY transaction identifier and numbers
         mpayPattern = /MPAY\w*\d+\s+\d*\s*([A-Z][A-Z\s]{2,20}?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX|\d|$)/i;
         depositorMatch = line.match(mpayPattern);
         if (depositorMatch) {
-          depositor = depositorMatch[1].trim().replace(/\s+/g, " ");
+          const name = depositorMatch[1].trim().replace(/\s+/g, " ");
+          depositor = name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
         } else {
           // Pattern 3: Fallback - look for names after MPAY but skip common transaction codes
           mpayPattern = /MPAY(?:UPITRTR|UPI|TRTR)?.*?\d+.*?([A-Z][A-Z\s]{3,20}?)(?:[A-Z]{3,4}XXX|\d|$)/i;
@@ -397,7 +399,7 @@ export default function PDFUpload({ onTransactionsImported }: PDFUploadProps) {
             const name = depositorMatch[1].trim().replace(/\s+/g, " ");
             // Skip transaction identifiers
             if (!name.match(/^(UPITRTR|TRTR|UPI|MPAY)$/i)) {
-              depositor = name;
+              depositor = name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
             }
           }
         }
@@ -411,7 +413,7 @@ export default function PDFUpload({ onTransactionsImported }: PDFUploadProps) {
         for (const match of nameMatches) {
           const name = match.trim().replace(/\s+/g, " ");
           if (!name.match(/^(UPITRTR|TRTR|UPI|MPAY|TRANSFER|NEFT|RTGS)$/i) && name.length > 2) {
-            depositor = name;
+            depositor = name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
             break;
           }
         }
