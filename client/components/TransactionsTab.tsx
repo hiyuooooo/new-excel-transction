@@ -516,7 +516,11 @@ export default function TransactionsTab({
               </TableHeader>
               <TableBody>
                 {filteredTransactions.map((transaction, index) => (
-                  <TableRow key={`transaction-${transaction.id}-${index}`} className="hover:bg-gray-50">
+                  <TableRow
+                    key={`transaction-${transaction.id}-${index}`}
+                    className="hover:bg-gray-50"
+                    data-transaction-id={transaction.id}
+                  >
                     {showDate && (
                     <TableCell>
                       {editingId === transaction.id ? (
