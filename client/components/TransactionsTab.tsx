@@ -221,7 +221,7 @@ export default function TransactionsTab({
     const newTransaction: Transaction = {
       id: uniqueId,
       date: new Date().toISOString().split("T")[0],
-      particulars: "",
+      particulars: "New Transaction",
       depositor: "",
       withdrawals: 0,
       deposits: 0,
@@ -231,6 +231,16 @@ export default function TransactionsTab({
     setTransactions([...transactions, newTransaction]);
     setEditingId(newTransaction.id);
     setEditData(newTransaction);
+    setCustomerSearchTerm("");
+    setShowCustomerDropdown(false);
+
+    // Scroll to the new transaction if not in view
+    setTimeout(() => {
+      const newRow = document.querySelector(`[data-transaction-id="${uniqueId}"]`);
+      if (newRow) {
+        newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
   };
 
   // Get unique depositors for filter
