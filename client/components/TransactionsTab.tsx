@@ -26,6 +26,9 @@ import {
   Filter,
   Calendar,
   ArrowUpDown,
+  Eye,
+  EyeOff,
+  Settings,
 } from "lucide-react";
 import {
   Select,
@@ -78,6 +81,12 @@ export default function TransactionsTab({
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [depositorFilter, setDepositorFilter] = useState("all");
+
+  // Column visibility toggles
+  const [showWithdrawals, setShowWithdrawals] = useState(true);
+  const [showBalance, setShowBalance] = useState(true);
+  const [showDate, setShowDate] = useState(true);
+  const [showType, setShowType] = useState(true);
 
   const handleEdit = (transaction: Transaction) => {
     setEditingId(transaction.id);
@@ -337,6 +346,46 @@ export default function TransactionsTab({
                 Clear Filters
               </Button>
             )}
+
+            {/* Column Visibility Controls */}
+            <div className="flex gap-2">
+              <Button
+                variant={showDate ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowDate(!showDate)}
+                className="whitespace-nowrap"
+              >
+                {showDate ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+                Date
+              </Button>
+              <Button
+                variant={showType ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowType(!showType)}
+                className="whitespace-nowrap"
+              >
+                {showType ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+                Type
+              </Button>
+              <Button
+                variant={showWithdrawals ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowWithdrawals(!showWithdrawals)}
+                className="whitespace-nowrap"
+              >
+                {showWithdrawals ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+                Withdrawals
+              </Button>
+              <Button
+                variant={showBalance ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowBalance(!showBalance)}
+                className="whitespace-nowrap"
+              >
+                {showBalance ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+                Balance
+              </Button>
+            </div>
           </div>
         </div>
       </div>
