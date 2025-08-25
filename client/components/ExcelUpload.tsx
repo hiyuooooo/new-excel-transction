@@ -383,13 +383,15 @@ export default function ExcelUpload({
       let depositorMatch = particulars.match(mpayPattern);
 
       if (depositorMatch) {
-        return depositorMatch[1].trim().replace(/\s+/g, " ");
+        const name = depositorMatch[1].trim().replace(/\s+/g, " ");
+        return name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
       } else {
         // Pattern 2: Look for names after any MPAY transaction identifier and numbers
         mpayPattern = /MPAY\w*\d+\s+\d*\s*([A-Z][A-Z\s]{2,20}?)(?:SBIN|PUNB|BARB|JIOPXXX|UCBA|IBKL|XXX|\d|$)/i;
         depositorMatch = particulars.match(mpayPattern);
         if (depositorMatch) {
-          return depositorMatch[1].trim().replace(/\s+/g, " ");
+          const name = depositorMatch[1].trim().replace(/\s+/g, " ");
+          return name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
         }
 
         // Pattern 3: Fallback - look for names after MPAY but skip common transaction codes
@@ -399,7 +401,7 @@ export default function ExcelUpload({
           const name = depositorMatch[1].trim().replace(/\s+/g, " ");
           // Skip transaction identifiers
           if (!name.match(/^(UPITRTR|TRTR|UPI|MPAY)$/i)) {
-            return name;
+            return name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
           }
         }
       }
@@ -433,14 +435,17 @@ export default function ExcelUpload({
       if (match) {
         const name = match[1].trim().replace(/\s+/g, " ");
         // Filter out common non-names and transaction identifiers
+        // Clean bank codes from the end of names
+        const cleanedName = name.replace(/(?:SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)XX$/i, '').trim();
+
         if (
-          !name.match(
+          !cleanedName.match(
             /^(UPITRTR|TRTR|MPAY|UPI|TRANSFER|NEFT|RTGS|XXX|SBIN|PUNB|BARB|UCBA|IBKL|JIOPXXX)$/i,
           ) &&
-          name.length > 2 &&
-          !name.match(/^\d+$/) // Exclude pure numbers
+          cleanedName.length > 2 &&
+          !cleanedName.match(/^\d+$/) // Exclude pure numbers
         ) {
-          return name;
+          return cleanedName;
         }
       }
     }
