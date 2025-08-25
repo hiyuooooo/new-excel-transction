@@ -331,9 +331,14 @@ export default function TransactionsTab({
           <p className="text-muted-foreground">
             View and edit all transaction details with deposited customer information
           </p>
-          <p className="text-sm text-muted-foreground">
-            ⌨️ Shortcuts: Press <kbd className="px-1 bg-gray-100 rounded text-xs">A</kbd> to add new • Press <kbd className="px-1 bg-gray-100 rounded text-xs">Enter</kbd> to save while editing
-          </p>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              ⌨️ Shortcuts: Press <kbd className="px-1 bg-gray-100 rounded text-xs">A</kbd> to add new • Press <kbd className="px-1 bg-gray-100 rounded text-xs">Enter</kbd> to save while editing
+            </p>
+            <p className="text-sm text-blue-600 bg-blue-50 p-2 rounded border">
+              ⚙️ <strong>Auto-Balance:</strong> When enabled, editing deposit amounts automatically clears withdrawals (and vice versa). This ensures each transaction is either a deposit OR withdrawal, maintaining proper transaction logic. Toggle this feature using the Auto-Balance button below.
+            </p>
+          </div>
         </div>
         <Button onClick={handleAddNew} className="whitespace-nowrap">
           <Plus className="w-4 h-4 mr-2" />
@@ -479,7 +484,7 @@ export default function TransactionsTab({
                 size="sm"
                 onClick={() => setAutoBalance(!autoBalance)}
                 className="whitespace-nowrap"
-                title="Auto-balance: When editing amounts, automatically clear the opposite field"
+                title="Auto-Balance Feature: When editing deposit amounts, withdrawals automatically clear to 0 (and vice versa). This maintains proper transaction logic where each entry is either a deposit OR withdrawal, never both. Click to toggle this behavior on/off."
               >
                 <Settings className="w-4 h-4 mr-1" />
                 Auto-Balance
