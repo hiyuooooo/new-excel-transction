@@ -482,6 +482,12 @@ export default function TransactionsTab({
                             setEditData({ ...editData, date: e.target.value })
                           }
                           className="w-32"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : (
                         formatDate(transaction.date)
@@ -500,6 +506,12 @@ export default function TransactionsTab({
                             onFocus={() => setShowCustomerDropdown(true)}
                             placeholder="Type customer name..."
                             className="w-full"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleSave();
+                              }
+                            }}
                           />
                           {showCustomerDropdown &&
                             filteredCustomerSuggestions.length > 0 && (
@@ -543,6 +555,12 @@ export default function TransactionsTab({
                             })
                           }
                           className="w-64"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : (
                         <span className="text-sm text-gray-600 max-w-xs truncate">
@@ -640,6 +658,12 @@ export default function TransactionsTab({
                             })
                           }
                           className="w-28 text-right"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSave();
+                            }
+                          }}
                         />
                       ) : (
                         <span className="balance-text font-medium">
